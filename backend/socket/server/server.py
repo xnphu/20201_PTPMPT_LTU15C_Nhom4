@@ -1,37 +1,68 @@
-import socket
-import sys
-import zipfile
-import os
+import random
+import socket, select
+from time import gmtime, strftime
+from random import randint
 
-port = 1337
+imgcounter = 1
+basename = "image%s.png"
 
-ss = socket.socket()
-print('[+] Server socket is created.')
+HOST = '127.0.0.1'
+PORT = 6666
 
-ss.bind(('', port))
-print('[+] Socket is binded to {}'.format(port))
+connected_clients_sockets = []
 
-ss.listen(5)
-print('[+] Waiting for connection...')
+server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-con, addr = ss.accept()
-print('[+] Got connection from {}'.format(addr[0]))
+server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+server_socket.bind((HOST, PORT))
+server_socket.listen(10)
 
-filename = con.recv(1024).decode()
+connected_clients_sockets.append(server_socket)
 
-f = open(filename, 'wb')
-l = con.recv(1024)
-while(l):
-	f.write(l)
-	l = con.recv(1024)
-f.close()
-print('[+] Received file ' + filename)
+while True:
 
-with zipfile.ZipFile(filename, 'r') as file:
-	print('[+] Extracting files...')
-	file.extractall()
-	print('[+] Done')
+    read_sockets, write_sockets, error_sockets = select.select(connected_clients_sockets, [], [])
 
-os.remove(filename)
-con.close()
-ss.close()
+    for sock in read_sockets:
+
+        if sock == server_socket:
+
+            sockfd, client_address = server_socket.accept()
+            connected_clients_sockets.append(sockfd)
+
+        else:
+            try:
+
+                data = sock.recv(4096)
+                txt = str(data)
+
+                if txt.startswith('SIZE'):
+                    tmp = txt.split()
+                    size = int(tmp[1])
+
+                    print 'got size'
+
+                    sock.send("GOT SIZE")
+
+                elif txt.startswith('BYE'):
+                    sock.shutdown()
+
+                elif data:
+
+                    myfile = open(basename % imgcounter, 'wb')
+
+                    data = sock.recv(40960000)
+                    if not data:
+                        myfile.close()
+                        break
+                    myfile.write(data)
+                    myfile.close()
+
+                    sock.send("GOT IMAGE")
+                    sock.shutdown()
+            except:
+                sock.close()
+                connected_clients_sockets.remove(sock)
+                continue
+        imgcounter += 1
+server_socket.close()
