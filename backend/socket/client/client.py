@@ -1,30 +1,43 @@
-import socket
-import sys
-import zipfile
-import os
+import random
+import socket, select
+from time import gmtime, strftime
+from random import randint
 
-host = '127.0.0.1'
-port = 1337
-k = int(sys.argv[1])
-zip_name = 'main.zip'
+image = "1.jpg"
 
-s = socket.socket()
-print('[+] Client socket is created.')
+HOST = '127.0.0.1'
+PORT = 6666
 
-s.connect((host, port))
-print('[+] Socket is connected to {}'.format(host))
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server_address = (HOST, PORT)
+sock.connect(server_address)
 
-with zipfile.ZipFile(zip_name, 'w') as file:
-	for j in range(1, (k+1)):
-		file.write('{}.jpg'.format(j))
-		print('[+] {}.jpg is sent'.format(j))
+try:
 
-s.send(zip_name.encode())
+    # open image
+    myfile = open(image, 'rb')
+    bytes = myfile.read()
+    size = len(bytes)
 
-f = open(zip_name, 'rb')
-l = f.read()
-s.sendall(l)
+    # send image size to server
+    sock.sendall("SIZE %s" % size)
+    answer = sock.recv(4096)
 
-os.remove(zip_name)
-f.close()
-s.close()
+    print 'answer = %s' % answer
+
+    # send image to server
+    if answer == 'GOT SIZE':
+        sock.sendall(bytes)
+
+        # check what server send
+        answer = sock.recv(4096)
+        print 'answer = %s' % answer
+
+        if answer == 'GOT IMAGE' :
+            sock.sendall("BYE BYE ")
+            print 'Image successfully send to server'
+
+    myfile.close()
+
+finally:
+    sock.close()
