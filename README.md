@@ -1,3 +1,14 @@
 # 20201_PTPMPT_LTU15C_Nhom4
-
-This is the readme file of #04 group in Distributed Computing subject. Later on in this project we'll complete developing a motion detector distributedly using the Docker Technology and Python as the programming language.
+## Đề tài
+```
+Hệ thống phát hiện đối tượng trong ảnh.
+Sử dụng Socket nhận ảnh từ máy thứ nhất chuyển dữ liệu qua máy thứ 2.
+Máy thứ 2 sẽ dùng thuật toán để phát hiện đối tượng trong ảnh.
+```
+## Thành viên
+```
+Nguyễn Xuân Phú – 20168411
+Nguyễn Hải Anh - 20168619
+Nguyễn Kỳ Thông – 20168807
+Nguyễn Lê Quang Huy - 20168230
+```
